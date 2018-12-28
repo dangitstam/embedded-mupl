@@ -21,8 +21,8 @@ object Interpreter {
     @throws(classOf[ArithmeticException])
     private def evalUnderEnv(ast: Exp, env: List[(String, Exp)]): Exp = ast match {
         case Var(s) => envLookUp(s, env) match {
-            case Some(e)   => evalUnderEnv(e, env)
-            case None      => throw new BadMUPLExpression("Undefined variable %s".format(s))
+            case Some(e) => evalUnderEnv(e, env)
+            case None => throw new BadMUPLExpression("Undefined variable %s".format(s))
         }
         case Munit() => ast
         case Const(i) => ast
@@ -51,8 +51,7 @@ object Interpreter {
         }
 
         // Pair & list semantics.
-        case Apair(e1, e2) => Apair(evalUnderEnv(e1, env),
-                                    evalUnderEnv(e2, env))
+        case Apair(e1, e2) => Apair(evalUnderEnv(e1, env), evalUnderEnv(e2, env))
         case First(e) => evalUnderEnv(e, env) match {
             case Apair(e1, e2) => e1
             case _ => throw new BadMUPLExpression("First applied to non-pair")
