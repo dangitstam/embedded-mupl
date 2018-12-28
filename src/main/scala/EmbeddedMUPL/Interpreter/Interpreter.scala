@@ -6,7 +6,9 @@ import EmbeddedMUPL.Language.MUPL._
 
 object Interpreter {
 
-    def envLookUp(variable: String, env: List[(String, Exp)]): Option[Exp] = {
+    def eval(ast: Exp): Exp = evalUnderEnv(ast, List())
+
+    private def envLookUp(variable: String, env: List[(String, Exp)]): Option[Exp] = {
         env.find( _._1 == variable ) match {
             case Some((s, v)) => Some(v)
             case _          => None
@@ -14,11 +16,10 @@ object Interpreter {
     }
 
     /**
-     * Interprets the AST into an Option[Int]. None is returned
-     * on faulty math operations.
+     * Interprets the AST to a value (Const / Munit).
      */
     @throws(classOf[ArithmeticException])
-    def evalUnderEnv(ast: Exp, env: List[(String, Exp)]): Exp = ast match {
+    private def evalUnderEnv(ast: Exp, env: List[(String, Exp)]): Exp = ast match {
         case Var(s) => envLookUp(s, env) match {
             case Some(e)   => evalUnderEnv(e, env)
             case None      => throw new BadMUPLExpression("Undefined variable %s".format(s))
@@ -116,8 +117,6 @@ object Interpreter {
             }
         }
     }
-
-    def eval(ast: Exp): Exp = evalUnderEnv(ast, List())
 
     /**
      * Custom exceptions.
