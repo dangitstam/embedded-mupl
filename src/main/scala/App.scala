@@ -22,8 +22,6 @@ object App {
 
     val program = apply function f on x
 
-    val test = ifnz("x") then 12 otherwise 15
-
     println(program)
     println(eval(program))
   }

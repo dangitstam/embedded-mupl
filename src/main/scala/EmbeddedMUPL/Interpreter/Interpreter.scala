@@ -3,7 +3,6 @@ package EmbeddedMUPL.Interpreter
 
 import EmbeddedMUPL.Language.MUPL._
 
-// TODO: Use List[String, Exp] instead of map
 
 object Interpreter {
 
@@ -122,11 +121,6 @@ object Interpreter {
     /**
      * Custom exceptions.
      */
-    final case class BadExp(
-        private val message: String = "", 
-        private val cause: Throwable = None.orNull)
-        extends Exception(message, cause)
-    
     final case class DivisionByZero(
         private val message: String = "Division by zero", 
         private val cause: Throwable = None.orNull)
@@ -136,19 +130,4 @@ object Interpreter {
         private val message: String = "", 
         private val cause: Throwable = None.orNull)
         extends Exception(message, cause)
-
-    /**
-     * Trick from Phillp Gabler
-     *
-     * Iterates over a pair of Option values and applies a function to their
-     * values if they resolve to Some[A] and Some[B].
-     */
-    def join[A, B](a: Option[A], b: Option[B]) = new {
-        // For operates over any collection, and options are a
-        // collection containing either 0 or 1 things.
-        def by[C](f: (A, B) => C): Option[C] = for {
-            x <- a
-            y <- b
-        } yield f(x, y)
-    }
 }
