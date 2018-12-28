@@ -25,6 +25,8 @@ object Interpreter {
         }
         case Munit() => ast
         case Const(i) => ast
+
+        // Arithmetic operations.
         case Add(a, b) => (evalUnderEnv(a, env), evalUnderEnv(b, env)) match {
             case (Const(i), Const(j)) => Const(i + j)
             case _  => throw new BadMUPLExpression("Addition includes non-Const")
@@ -73,7 +75,6 @@ object Interpreter {
                 }
             case _  => throw new BadMUPLExpression("Greater-than applied to non-Const")
         }
-
         case Ifnz(cond, e1, e2) => evalUnderEnv(cond, env) match {
             case Const(i) =>
                 if (i != 0) {

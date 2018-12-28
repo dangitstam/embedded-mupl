@@ -35,22 +35,34 @@ final case class Munit()                                   extends Exp
 final case class IsMunit(e: Exp)                           extends Exp
 final case class Closure(env: List[(String, Exp)], f: Fun) extends Exp
 
-// Additions to the MUPL langauge.
+/**
+ * Additions to the MUPL language.
+ */
 final case class Subtract(a: Exp, b: Exp) extends Exp
 final case class Multiply(a: Exp, b: Exp) extends Exp
 final case class Divide(a: Exp, b: Exp) extends Exp
 
 /**
- * Extend the language a bit further to include implicit variable
- * and Constant creation.
+ * Extend the language further to include implicit variable,
+ * constant, and function creation.
  */
  object Enhancements {
+
+     /** 
+      * The presence of these implicit definitions allow
+      * using strings and ints in place of Var(string)
+      * and Const(int).
+      *
+      * For instance, "x" plus "y" is implicitly converted to
+      * Var("x") plus Var("y") when plus is called.
+      */
     implicit def StringToExp(s: String): Var = Var(s)
     implicit def intToExp(i: Int): Const = Const(i)
 
     /**
      * Custom let expresion:
      * let variable "x" equal ("x" plus "y") in ("z" minus 14 divide "z")
+     *
      * Custom function definition:
      * let function null of "x" be (
      *     "x" times 17
@@ -68,14 +80,18 @@ final case class Divide(a: Exp, b: Exp) extends Exp
     class In(name: Var, value: Exp) { def in(body: Exp): Exp = Let(name, value, body) }
     class Be(name: Var, arg:   Var) { def be(body: Exp): Exp = Fun(name, arg, body) }
 
-    // Custom function call:
-    // call function "f" with argument "x" -> Exp
+    /**
+     * Custom function call:
+     * apply function "f" on ("x" plus 12)
+     */
     def apply = new FunctionConstructor()
     class FunctionConstructor() { def function(fname: Exp): Use = new Use(fname) }
     class Use(fname: Exp)       { def on(arg: Exp) = new Call(fname, arg) }
 
-    // If-not-zero construction:
-    // If "x" is not zero then 
+    /**
+     * Custom if-not-zero:
+     * ifnz(cond) then e1 otherwise e2
+     */
     def ifnz(cond: Exp) = new IfnzConstructor(cond)
     class IfnzConstructor(cond: Exp) {
         def then(e1: Exp): Else = new Else(cond, e1)
