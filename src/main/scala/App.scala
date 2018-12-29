@@ -16,8 +16,10 @@ object App {
     )
 
     var f =
-    let function null of "x" be (
-        "x" times 17
+    define function null of "x" as (
+        ifnz (isgreater ("x", 12 + 25))
+        then ("x" times 17)
+        otherwise Const(1000)
     )
 
     val program = apply function f on x

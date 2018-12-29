@@ -5,6 +5,10 @@ import EmbeddedMUPL.Language.MUPL._
 
 object Interpreter {
 
+    /**
+     * Interprets the AST to a value (Const / Munit) beginning from an
+     * empty environment.
+     */
     def eval(ast: Exp): Exp = evalUnderEnv(ast, List())
 
     private def envLookUp(variable: String, env: List[(String, Exp)]): Option[Exp] = {
@@ -14,9 +18,6 @@ object Interpreter {
         }
     }
 
-    /**
-     * Interprets the AST to a value (Const / Munit).
-     */
     @throws(classOf[ArithmeticException])
     private def evalUnderEnv(ast: Exp, env: List[(String, Exp)]): Exp = ast match {
         case Var(s) => envLookUp(s, env) match {
@@ -72,7 +73,7 @@ object Interpreter {
                 } else {
                     Const(0)
                 }
-            case _  => throw new BadMUPLExpression("Greater-than applied to non-Const")
+            case _  => throw new BadMUPLExpression("isgreater applied to non-Const")
         }
         case Ifnz(cond, e1, e2) => evalUnderEnv(cond, env) match {
             case Const(i) =>
@@ -81,7 +82,7 @@ object Interpreter {
                 } else {
                     evalUnderEnv(e2, env)
                 }
-            case _  => throw new BadMUPLExpression("If-not-zero applied to non-Const")
+            case _  => throw new BadMUPLExpression("ifnz applied to non-Const")
         }
 
         // Variable bindings.

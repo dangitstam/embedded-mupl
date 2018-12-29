@@ -15,7 +15,6 @@ sealed trait Exp {
     def minus(other: Exp) = Subtract(this, other)
     def times(other: Exp) = Multiply(this, other)
     def divide(other: Exp) = Divide(this, other)
-    def greaterThan(other: Exp) = IsGreater(this, other)
 
     /**
      * Control flow.
@@ -72,6 +71,11 @@ object Enhancements {
       */
     implicit def StringToExp(s: String): Var = Var(s)
     implicit def intToExp(i: Int): Const = Const(i)
+
+    /**
+     * Comparisons.
+     */
+    def isgreater(e1: Exp, e2: Exp) = IsGreater(e1, e2)
 
     /**
      * Custom let expresion:
