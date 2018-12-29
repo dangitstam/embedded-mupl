@@ -15,6 +15,15 @@ sealed trait Exp {
     def minus(other: Exp) = Subtract(this, other)
     def times(other: Exp) = Multiply(this, other)
     def divide(other: Exp) = Divide(this, other)
+    def greaterThan(other: Exp) = IsGreater(this, other)
+
+    /**
+     * Control flow.
+     *
+     * Custom if-not-zero:
+     * e1 ifnz cond otherwise e2
+     */
+    def ifnz(cond: Exp) = new Otherwise(cond, this)
 }
 
 /**
@@ -42,11 +51,16 @@ final case class Subtract(a: Exp, b: Exp) extends Exp
 final case class Multiply(a: Exp, b: Exp) extends Exp
 final case class Divide(a: Exp, b: Exp) extends Exp
 
+// For use in ifnz only:
+class Otherwise(cond: Exp, e1: Exp) {
+    def otherwise(e2: Exp) = new Ifnz(cond, e1, e2)
+}
+
 /**
  * Extend the language further to include implicit variable,
  * constant, and function creation.
  */
- object Enhancements {
+object Enhancements {
 
      /** 
       * The presence of these implicit definitions allow
@@ -64,39 +78,51 @@ final case class Divide(a: Exp, b: Exp) extends Exp
      * let variable "x" equal ("x" plus "y") in ("z" minus 14 divide "z")
      *
      * Custom function definition:
-     * let function null of "x" be (
+     * define function null of "x" as (
      *     "x" times 17
      * )
      */ 
     def let = new LetConstructor()
     class LetConstructor() {
         def variable(name: Var): Eq = new Eq(name)
+    }
+    def define = new FunctionConstructor()
+    class FunctionConstructor() {
         def function(name: Var): Eq = new Eq(name)
     }
     class Eq(name: Var) {
         def equal(value: Exp) = new In(name, value)
-        def of(arg: Var) = new Be(name, arg)
+        def of(arg: Var) = new As(name, arg)
     }
     class In(name: Var, value: Exp) { def in(body: Exp): Exp = Let(name, value, body) }
-    class Be(name: Var, arg:   Var) { def be(body: Exp): Exp = Fun(name, arg, body) }
+    class As(name: Var, arg:   Var) { def as(body: Exp): Exp = Fun(name, arg, body) }
 
     /**
      * Custom function call:
      * apply function "f" on ("x" plus 12)
      */
-    def apply = new FunctionConstructor()
-    class FunctionConstructor() { def function(fname: Exp): Use = new Use(fname) }
+    def apply = new CallConstructor()
+    class CallConstructor() { def function(fname: Exp): Use = new Use(fname) }
     class Use(fname: Exp)       { def on(arg: Exp) = new Call(fname, arg) }
 
     /**
-     * Custom if-not-zero:
-     * ifnz(cond) then e1 otherwise e2
+     * Alternative if-not-zero:
+     * ifnz(cond) then e1 else e2 
      */
-    def ifnz(cond: Exp) = new IfnzConstructor(cond)
-    class IfnzConstructor(cond: Exp) {
-        def then(e1: Exp): Else = new Else(cond, e1)
-    }
-    class Else(cond: Exp, e1: Exp) {
-        def otherwise(e2: Exp) = new Ifnz(cond, e1, e2)
-    }
- }
+     def ifnz(cond: Exp) = new IfnzConstructor(cond)
+     class IfnzConstructor(cond: Exp) {
+         def then(e1: Exp) = new Otherwise(cond, e1)
+     }
+
+     /**
+      * List construction and semantics.
+      * apair e1 e2
+      */
+      def construct = new CollectionsConstructor()
+      class CollectionsConstructor() {
+          def pair(e1: Exp, e2: Exp) = Apair(e1, e2)
+      }
+      def first(e: Exp) = First(e)
+      def second(e: Exp) = Second(e)
+      def ismunit(e: Exp) = IsMunit(e)
+}
