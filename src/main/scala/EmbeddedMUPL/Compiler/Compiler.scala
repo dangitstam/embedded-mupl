@@ -22,8 +22,7 @@ object Compiler {
     }
 
     /**
-     * Interprets the AST to a value (Const / Munit) beginning from an
-     * empty environment.
+     * Compiles the AST to valid Python 3 code.
      */
     @throws(classOf[ArithmeticException])
     def compile(ast: Exp): Unit = ast match {
@@ -34,15 +33,23 @@ object Compiler {
         case Const(i) => {
             newLine("res = %s".format(i))
         }
-
-        // Arithmetic operations.
+        // TODO: Can add be generalized?
         case Add(a, b) => (a, b) match {
             case (Var(x), Var(y)) => {
+                newLine("res = %s + %s".format(x, y))
+            }
+            case (Var(x), b) => {
+                // Compile y, add it to x
                 newLine("def add():")
                 indent
-                newLine("return %s + %s".format(x, y))
+                compile(b)
+                newLine("return %s + res".format(x))
                 unindent
                 newLine("res = add()")
+            }
+            case (a, Var(x)) => {
+                // Add is commutative.
+                compile(Add(Var(x), a))
             }
             case (a, b) => {
                 newLine("def add():")
@@ -56,13 +63,27 @@ object Compiler {
                 newLine("res = add()")
             }
         }
+        case Ifnz(cond, e1, e2) => {
+            newLine("def true_branch():")
+            indent
+            compile(e1)
+            newLine("return res")
+            unindent
+            newLine("def false_branch():")
+            indent
+            compile(e2)
+            newLine("return res")
+            unindent
+            compile(cond)
+            newLine("res = true_branch() if res == 0 else false_branch()")
+        }
         case Let(name, value, body) => name match {
             case Var(s) => {
                 compile(value)
                 newLine("%s = res".format(s))
                 compile(body)
             }
-            case _      => throw new BadMUPLExpression("Let: invalid variable name")
+            case _  => throw new BadMUPLExpression("Let: invalid variable name")
         }
         case Fun(v1: Var, v2: Var, e) => {
             // TODO: Anonymous and named cases.
@@ -72,9 +93,7 @@ object Compiler {
             compile(e)
             newLine("return res")
             unindent
-        }  
-
-        case _ => print("hi")
+        }
     }
 
     /**

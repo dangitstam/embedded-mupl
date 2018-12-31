@@ -36,6 +36,11 @@ object App {
         "x" plus 23
     )
 
+    var f3 =
+    (ifnz (Const(12))
+    then (29 plus 17)
+    otherwise Const(1000))
+
     val program = apply function f on x
 
     // Interpreted (produces an immediate result).
@@ -44,6 +49,6 @@ object App {
 
     // Compiled to Python.
     // When run in a python interperter, also produces 43. 
-    compile(x2)
+    compile(f3)
   }
 }
