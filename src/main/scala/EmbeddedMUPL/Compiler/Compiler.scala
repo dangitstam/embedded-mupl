@@ -7,12 +7,6 @@ object Compiler {
 
     var indentation = 0
 
-    /**
-     * Interprets the AST to a value (Const / Munit) beginning from an
-     * empty environment.
-     */
-    def compile(ast: Exp): Unit = compileUnderEnv(ast, List())
-
     private def envLookUp(variable: String, env: List[(String, Exp)]): Option[Exp] = {
         env.find( _._1 == variable ) match {
             case Some((s, v)) => Some(v)
@@ -34,28 +28,18 @@ object Compiler {
         println(s)
     }
 
-
+    /**
+     * Interprets the AST to a value (Const / Munit) beginning from an
+     * empty environment.
+     */
     @throws(classOf[ArithmeticException])
-    private def compileUnderEnv(ast: Exp, env: List[(String, Exp)]): Unit = ast match {
-        // case Var(s) => envLookUp(s, env) match {
-        //     case Some(e) => compileUnderEnv(e, env)
-        //     case None => throw new BadMUPLExpression("Undefined variable %s".format(s))
-        // }
+    def compile(ast: Exp): Unit = ast match {
         // // case Munit() => ast
         case Var(s) => {
-            newLine("def var():")
-            indent
-            newLine("return %s".format(s))
-            unindent
-            newLine("res = var()")
+            newLine("res = %s".format(s))
         }
         case Const(i) => {
-            newLine("def const():")
-            indent
-            newLine("return %s".format(i))
-            unindent
-            newLine("")
-            newLine("res = const()")
+            newLine("res = %s".format(i))
         }
 
         // Arithmetic operations.
@@ -80,12 +64,11 @@ object Compiler {
                 newLine("res = add()")
             }
         }
-
         case Let(name, value, body) => name match {
             case Var(s) => {
-                compileUnderEnv(value, env)
+                compile(value)
                 newLine("%s = res".format(s))
-                compileUnderEnv(body, env)
+                compile(body)
             }
             case _      => throw new BadMUPLExpression("Can't compile let expression")
         }
