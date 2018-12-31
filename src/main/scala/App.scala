@@ -1,11 +1,13 @@
 
 import EmbeddedMUPL.Interpreter._
+import EmbeddedMUPL.Compiler._
 import EmbeddedMUPL.Language.MUPL._
 import EmbeddedMUPL.Language.MUPL.Enhancements._
 
 object App {
   def main(args: Array[String]) {
     import Interpreter._
+    import Compiler._
 
     // Embedded MUPL!
     val x =
@@ -15,6 +17,13 @@ object App {
         )
     )
 
+    val x2 =
+    (let variable "x" equal 12 in (
+        "x" plus 17
+    )) plus (let variable "y" equal 12 in (
+        "y" plus 2
+    ))
+
     var f =
     define function null of "x" as (
         ifnz (isgreater ("x", 12 + 25))
@@ -22,9 +31,20 @@ object App {
         otherwise Const(1000)
     )
 
+    var f2 =
+    define function "z" of "x" as (
+        "x" plus 23
+    )
+
     val program = apply function f on x
 
-    println(program)
-    println(eval(program))
+
+    // Interpreted (produces an immediate result).
+    val Const(value) = eval(x2)
+    println("res = %d".format(value))
+
+    // Compiled to Python.
+    // When run in a python interperter, also produces 43. 
+    compile(x2)
   }
 }

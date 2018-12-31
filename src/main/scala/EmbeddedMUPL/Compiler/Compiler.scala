@@ -73,6 +73,16 @@ object Compiler {
             case _      => throw new BadMUPLExpression("Can't compile let expression")
         }
 
+        case Fun(v1: Var, v2: Var, e) => {
+            // TODO: Anonymous and named cases.
+            val Var(name) = v1; val Var(arg) = v2
+            newLine("def %s(%s):".format(name, arg))
+            indent
+            compile(e)
+            newLine("return res")
+            unindent
+        }  
+
         case _ => print("hi")
     }
 
