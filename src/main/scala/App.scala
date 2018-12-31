@@ -38,7 +38,6 @@ object App {
 
     val program = apply function f on x
 
-
     // Interpreted (produces an immediate result).
     val Const(value) = eval(x2)
     println("res = %d".format(value))

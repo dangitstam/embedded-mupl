@@ -7,13 +7,6 @@ object Compiler {
 
     var indentation = 0
 
-    private def envLookUp(variable: String, env: List[(String, Exp)]): Option[Exp] = {
-        env.find( _._1 == variable ) match {
-            case Some((s, v)) => Some(v)
-            case _          => None
-        }
-    }
-
     private def indent : Unit = {
         this.indentation += 4
     }
@@ -55,7 +48,6 @@ object Compiler {
                 newLine("def add():")
                 indent
                 compile(a)
-                // Trust that res is properly set
                 newLine("left_operand = res")
                 compile(b)
                 newLine("res += left_operand")
@@ -70,9 +62,8 @@ object Compiler {
                 newLine("%s = res".format(s))
                 compile(body)
             }
-            case _      => throw new BadMUPLExpression("Can't compile let expression")
+            case _      => throw new BadMUPLExpression("Let: invalid variable name")
         }
-
         case Fun(v1: Var, v2: Var, e) => {
             // TODO: Anonymous and named cases.
             val Var(name) = v1; val Var(arg) = v2
