@@ -37,8 +37,7 @@ object Compiler {
         }
         case (a, Var(x)) => {
             // Binary operations are commutative for arithmetic.
-            // If ">" is being used, substitute the operation
-            // with "<".
+            // If ">" is being used, substitute the operation with "<".
             if (op == ">") {
                 binop(Var(x), a, "<")
             } else {
@@ -139,7 +138,6 @@ object Compiler {
                 }
             }
         }
-        case _ => println(ast)
     }
 
 
