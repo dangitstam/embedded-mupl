@@ -44,11 +44,11 @@ object App {
     val program = apply function f on x
 
     // Interpreted (produces an immediate result).
-    val Const(value) = eval(x2)
+    val Const(value) = eval(program)
     println("res = %d".format(value))
 
     // Compiled to Python.
     // When run in a python interperter, also produces 43. 
-    compile(x2)
+    compile(program)
   }
 }

@@ -68,7 +68,10 @@ object Compiler {
         case Subtract(a, b) => binop(a, b, "-")
         case Multiply(a, b) => binop(a, b, "*")
         case Divide(a, b) => binop(a, b, "/")
-        case IsGreater(a, b) => binop(a, b, ">")
+        case IsGreater(a, b) => {
+            binop(a, b, ">")
+            newLine("res = int(res)")
+        }
         case Ifnz(cond, e1, e2) => {
             newLine("def true_branch():")
             indent; compile(e1)
@@ -78,7 +81,7 @@ object Compiler {
             indent; compile(e2)
             newLine("return res")
             unindent; compile(cond)
-            newLine("res = true_branch() if res == 0 else false_branch()")
+            newLine("res = true_branch() if res != 0 else false_branch()")
         }
         case Let(name, value, body) => name match {
             case Var(s) => {
@@ -95,7 +98,6 @@ object Compiler {
             newLine("def call():")
             indent; compile(arg)
             newLine("arg = res")
-
             fn match {
                 // Function call uses a reference
                 case Var(name) => {
@@ -107,16 +109,18 @@ object Compiler {
                     v1 match {
                         case Var(name) => newLine("res = $s(arg)".format(name))
 
-                        // Anonymous functions will bind res to the lambda.
-                        case _         => newLine("res = res(arg)")
+                        // Anonymous functions will bind `null` to the lambda.
+                        case _         => newLine("res = null(arg)")
                     }
                 }
                 case _ => {
                     throw new BadMUPLExpression("Function call applied to non-function")
                 }
             }
+            newLine("return res")
+            unindent; newLine("res = call()")
         }
-        case Fun(v1: Var, v2: Var, e) => {
+        case Fun(v1, v2: Var, e) => {
             val Var(arg) = v2
             v1 match {
                 case Var(name) => {
@@ -125,15 +129,17 @@ object Compiler {
                     newLine("return res")
                     unindent
                 }
-
-                // Anonymous functions.
                 case null => {
-                    newLine("res = lambda $s: (".format(arg))
+                    // Anonymous functions.
+                    // `null` is a keyword in Scala but not in Python!
+                    newLine("def null(arg):")
                     indent; compile(e)
-                    unindent; newLine(")")
+                    newLine("return res")
+                    unindent
                 }
             }
         }
+        case _ => println(ast)
     }
 
 
