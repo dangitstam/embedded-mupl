@@ -22,59 +22,62 @@ object Compiler {
     }
 
     /**
+     * Construct a generalized binary operator.
+     */
+    def binop(a: Exp, b: Exp, op: String): Unit = (a, b) match {
+        case (Var(x), Var(y)) => {
+            newLine("res = %s %s %s".format(x, op, y))
+        }
+        case (Var(x), b) => {
+            // Compile y, add it to x
+            newLine("def binop():")
+            indent; compile(b)
+            newLine("return %s %s res".format(x, op))
+            unindent; newLine("res = binop()")
+        }
+        case (a, Var(x)) => {
+            // Binary operations are commutative for arithmetic.
+            // If ">" is being used, substitute the operation
+            // with "<".
+            if (op == ">") {
+                binop(Var(x), a, "<")
+            } else {
+                binop(Var(x), a, op)
+            }   
+        }
+        case (a, b) => {
+            newLine("def binop():")
+            indent; compile(a)
+            newLine("left_operand = res")
+            compile(b)
+            newLine("res = left_operand %s res".format(op))
+            newLine("return res")
+            unindent; newLine("res = binop()")
+        }
+    }
+
+    /**
      * Compiles the AST to valid Python 3 code.
      */
     @throws(classOf[ArithmeticException])
     def compile(ast: Exp): Unit = ast match {
-        // // case Munit() => ast
-        case Var(s) => {
-            newLine("res = %s".format(s))
-        }
-        case Const(i) => {
-            newLine("res = %s".format(i))
-        }
-        // TODO: Can add be generalized?
-        case Add(a, b) => (a, b) match {
-            case (Var(x), Var(y)) => {
-                newLine("res = %s + %s".format(x, y))
-            }
-            case (Var(x), b) => {
-                // Compile y, add it to x
-                newLine("def add():")
-                indent
-                compile(b)
-                newLine("return %s + res".format(x))
-                unindent
-                newLine("res = add()")
-            }
-            case (a, Var(x)) => {
-                // Add is commutative.
-                compile(Add(Var(x), a))
-            }
-            case (a, b) => {
-                newLine("def add():")
-                indent
-                compile(a)
-                newLine("left_operand = res")
-                compile(b)
-                newLine("res += left_operand")
-                newLine("return res")
-                unindent
-                newLine("res = add()")
-            }
-        }
+        case Munit() => newLine("res = null")
+        case Var(s) => newLine("res = %s".format(s))
+        case Const(i) => newLine("res = %s".format(i))
+        case Add(a, b) => binop(a, b, "+")
+        case Subtract(a, b) => binop(a, b, "-")
+        case Multiply(a, b) => binop(a, b, "*")
+        case Divide(a, b) => binop(a, b, "/")
+        case IsGreater(a, b) => binop(a, b, ">")
         case Ifnz(cond, e1, e2) => {
             newLine("def true_branch():")
-            indent
-            compile(e1)
+            indent; compile(e1)
             newLine("return res")
             unindent
             newLine("def false_branch():")
-            indent
-            compile(e2)
+            indent; compile(e2)
             newLine("return res")
-            unindent
-            compile(cond)
+            unindent; compile(cond)
             newLine("res = true_branch() if res == 0 else false_branch()")
         }
         case Let(name, value, body) => name match {
@@ -83,18 +86,56 @@ object Compiler {
                 newLine("%s = res".format(s))
                 compile(body)
             }
-            case _  => throw new BadMUPLExpression("Let: invalid variable name")
+            case _    => throw new BadMUPLExpression("Let: invalid variable name")
+        }
+
+        // Function call semantics.
+        case Call(fn: Exp, arg: Exp) => {
+            // Bind a value to the compiled argument.
+            newLine("def call():")
+            indent; compile(arg)
+            newLine("arg = res")
+
+            fn match {
+                // Function call uses a reference
+                case Var(name) => {
+                    newLine("res = $s(arg)".format(name))
+                }
+                // Function is a value.
+                case Fun(v1, v2, e) => {
+                    compile(fn)
+                    v1 match {
+                        case Var(name) => newLine("res = $s(arg)".format(name))
+
+                        // Anonymous functions will bind res to the lambda.
+                        case _         => newLine("res = res(arg)")
+                    }
+                }
+                case _ => {
+                    throw new BadMUPLExpression("Function call applied to non-function")
+                }
+            }
         }
         case Fun(v1: Var, v2: Var, e) => {
-            // TODO: Anonymous and named cases.
-            val Var(name) = v1; val Var(arg) = v2
-            newLine("def %s(%s):".format(name, arg))
-            indent
-            compile(e)
-            newLine("return res")
-            unindent
+            val Var(arg) = v2
+            v1 match {
+                case Var(name) => {
+                    newLine("def %s(%s):".format(name, arg))
+                    indent; compile(e)
+                    newLine("return res")
+                    unindent
+                }
+
+                // Anonymous functions.
+                case null => {
+                    newLine("res = lambda $s: (".format(arg))
+                    indent; compile(e)
+                    unindent; newLine(")")
+                }
+            }
         }
     }
+
 
     /**
      * Custom exceptions.

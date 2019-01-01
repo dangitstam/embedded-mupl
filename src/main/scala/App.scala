@@ -19,9 +19,9 @@ object App {
 
     val x2 =
     (let variable "x" equal 12 in (
-        "x" plus 17
+        "x" minus 17
     )) plus (let variable "y" equal 12 in (
-        "y" plus 2
+        "y" times 2
     ))
 
     var f =
@@ -49,6 +49,6 @@ object App {
 
     // Compiled to Python.
     // When run in a python interperter, also produces 43. 
-    compile(f3)
+    compile(x2)
   }
 }
