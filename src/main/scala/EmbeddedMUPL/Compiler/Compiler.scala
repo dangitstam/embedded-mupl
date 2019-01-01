@@ -2,10 +2,14 @@ package EmbeddedMUPL.Compiler
 
 import EmbeddedMUPL.Language.MUPL._
 
+import java.io._
+
 
 object Compiler {
 
-    var indentation = 0
+    private var indentation = 0
+
+    private var output = new PrintWriter(new File("mupl.py"))
 
     private def indent : Unit = {
         this.indentation += 4
@@ -17,21 +21,19 @@ object Compiler {
     }
 
     private def newLine(s: String) : Unit = {
-        print(" " * this.indentation)
-        println(s)
+        output.write(" " * this.indentation)
+        output.println(s)
     }
 
-    /**
-     * Construct a generalized binary operator.
-     */
-    def binop(a: Exp, b: Exp, op: String): Unit = (a, b) match {
+    // Construct a generalized binary operator.
+    private def binop(a: Exp, b: Exp, op: String): Unit = (a, b) match {
         case (Var(x), Var(y)) => {
             newLine("res = %s %s %s".format(x, op, y))
         }
         case (Var(x), b) => {
             // Compile y, add it to x
             newLine("def binop():")
-            indent; compile(b)
+            indent; compileToOutput(b)
             newLine("return %s %s res".format(x, op))
             unindent; newLine("res = binop()")
         }
@@ -44,11 +46,12 @@ object Compiler {
                 binop(Var(x), a, op)
             }   
         }
+        // Both operands require compilation.
         case (a, b) => {
             newLine("def binop():")
-            indent; compile(a)
+            indent; compileToOutput(a)
             newLine("left_operand = res")
-            compile(b)
+            compileToOutput(b)
             newLine("res = left_operand %s res".format(op))
             newLine("return res")
             unindent; newLine("res = binop()")
@@ -58,8 +61,14 @@ object Compiler {
     /**
      * Compiles the AST to valid Python 3 code.
      */
+    def compile(ast: Exp, outputPath: String = "mupl.py"): Unit = {
+        this.output = new PrintWriter(new File(outputPath))
+        compileToOutput(ast)
+        this.output.close()
+    }
+
     @throws(classOf[ArithmeticException])
-    def compile(ast: Exp): Unit = ast match {
+    private def compileToOutput(ast: Exp): Unit = ast match {
         case Munit() => newLine("res = null")
         case Var(s) => newLine("res = %s".format(s))
         case Const(i) => newLine("res = %s".format(i))
@@ -73,20 +82,20 @@ object Compiler {
         }
         case Ifnz(cond, e1, e2) => {
             newLine("def true_branch():")
-            indent; compile(e1)
+            indent; compileToOutput(e1)
             newLine("return res")
             unindent
             newLine("def false_branch():")
-            indent; compile(e2)
+            indent; compileToOutput(e2)
             newLine("return res")
-            unindent; compile(cond)
+            unindent; compileToOutput(cond)
             newLine("res = true_branch() if res != 0 else false_branch()")
         }
         case Let(name, value, body) => name match {
             case Var(s) => {
-                compile(value)
+                compileToOutput(value)
                 newLine("%s = res".format(s))
-                compile(body)
+                compileToOutput(body)
             }
             case _    => throw new BadMUPLExpression("Let: invalid variable name")
         }
@@ -95,7 +104,7 @@ object Compiler {
         case Call(fn: Exp, arg: Exp) => {
             // Bind a value to the compiled argument.
             newLine("def call():")
-            indent; compile(arg)
+            indent; compileToOutput(arg)
             newLine("arg = res")
             fn match {
                 // Function call uses a reference
@@ -104,7 +113,7 @@ object Compiler {
                 }
                 // Function is a value.
                 case Fun(v1, v2, e) => {
-                    compile(fn)
+                    compileToOutput(fn)
                     v1 match {
                         case Var(name) => newLine("res = $s(arg)".format(name))
 
@@ -124,7 +133,7 @@ object Compiler {
             v1 match {
                 case Var(name) => {
                     newLine("def %s(%s):".format(name, arg))
-                    indent; compile(e)
+                    indent; compileToOutput(e)
                     newLine("return res")
                     unindent
                 }
@@ -132,14 +141,13 @@ object Compiler {
                     // Anonymous functions.
                     // `null` is a keyword in Scala but not in Python!
                     newLine("def null(arg):")
-                    indent; compile(e)
+                    indent; compileToOutput(e)
                     newLine("return res")
                     unindent
                 }
             }
         }
     }
-
 
     /**
      * Custom exceptions.
