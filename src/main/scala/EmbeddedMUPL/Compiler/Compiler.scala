@@ -7,9 +7,12 @@ import java.io._
 
 object Compiler {
 
-  private var indentation = 0
-
+  // Compiled code will be written here.
   private var output = new PrintWriter(new File("mupl.py"))
+
+  // Indentation is obligatory in Python. Maintaining how
+  // much we've indented so far is necessary.
+  private var indentation = 0
 
   private def indent : Unit = {
     this.indentation += 4
@@ -69,6 +72,13 @@ object Compiler {
 
   @throws(classOf[ArithmeticException])
   private def compileToOutput(ast: Exp): Unit = ast match {
+    // We leverage function call semantics of Python to obscure
+    // variables used in self-contained computations.
+    //
+    // Non-trivial operations compile to Python functions that
+    // when called, return the result of the computation.
+    // Convention then is to bind the result to `res` so that
+    // the next computation has access to the result.
     case Munit() => newLine("res = null")
     case Var(s) => newLine("res = %s".format(s))
     case Const(i) => newLine("res = %s".format(i))
@@ -78,9 +88,7 @@ object Compiler {
     case Divide(a, b) => binop(a, b, "/")
     case IsGreater(a, b) => {
       binop(a, b, ">")
-
-      // Cast resulting boolean to int.
-      newLine("res = int(res)")
+      newLine("res = int(res)") // Cast resulting boolean to int.
     }
     case Ifnz(cond, e1, e2) => {
       newLine("def true_branch():")
@@ -98,10 +106,8 @@ object Compiler {
         newLine("%s = res".format(s))
         compileToOutput(body)
       }
-      case _  => throw new BadMUPLExpression("Let: invalid variable name")
+      case _ => throw new BadMUPLExpression("Let: invalid variable name")
     }
-
-    // Function call semantics.
     case Call(fn: Exp, arg: Exp) => {
       // Bind a value to the compiled argument.
       newLine("def call():")
