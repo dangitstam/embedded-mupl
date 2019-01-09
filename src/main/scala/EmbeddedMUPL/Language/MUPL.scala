@@ -27,6 +27,11 @@ sealed trait Exp {
 
 /**
  * Original MUPL constructs.
+ * Composition of these constructs make up the ASTs that
+ * are built from the DSL syntax.
+ *
+ * ASTs made from these constructs are either interpreted
+ * or compiled to Python.
  */
 final case class Var(s: String)              extends Exp
 final case class Const(i: Int)               extends Exp
@@ -78,13 +83,17 @@ object Enhancements {
   def isgreater(e1: Exp, e2: Exp) = IsGreater(e1, e2)
 
   /**
-   * Custom let expresion:
-   * let variable "x" equal ("x" plus "y") in ("z" minus 14 divide "z")
+   * Method calls using `.` can also be called with a space
+   * (i.e. foo.x and foo x).
+   * We can chain function calls and object instantiation to create new syntax
+   * embedded within Scala.
    *
-   * Custom function definition:
-   * define function null of "x" as (
-   *   "x" times 17
-   * )
+   * For instance, below we have custom let syntax:
+   *    let variable "x" equal ("x" plus "y") in ("z" minus 14 divide "z")
+   * And function syntax
+   *    define function null of "x" as (
+   *       "x" times 17
+   *    )
    */ 
   def let = new LetConstructor()
   class LetConstructor() {
@@ -98,8 +107,12 @@ object Enhancements {
     def equal(value: Exp) = new In(name, value)
     def of(arg: Var) = new As(name, arg)
   }
-  class In(name: Var, value: Exp) { def in(body: Exp): Exp = Let(name, value, body) }
-  class As(name: Var, arg:   Var) { def as(body: Exp): Exp = Fun(name, arg, body) }
+  class In(name: Var, value: Exp) {
+    def in(body: Exp): Exp = Let(name, value, body)
+  }
+  class As(name: Var, arg: Var) {
+    def as(body: Exp): Exp = Fun(name, arg, body)
+  }
 
   /**
    * Custom function call:
@@ -107,7 +120,7 @@ object Enhancements {
    */
   def apply = new CallConstructor()
   class CallConstructor() { def function(fname: Exp): Use = new Use(fname) }
-  class Use(fname: Exp)     { def on(arg: Exp) = new Call(fname, arg) }
+  class Use(fname: Exp) { def on(arg: Exp) = new Call(fname, arg) }
 
   /**
    * Alternative if-not-zero:
@@ -128,5 +141,6 @@ object Enhancements {
     }
     def first(e: Exp) = First(e)
     def second(e: Exp) = Second(e)
+    def munit() = Munit()
     def ismunit(e: Exp) = IsMunit(e)
 }

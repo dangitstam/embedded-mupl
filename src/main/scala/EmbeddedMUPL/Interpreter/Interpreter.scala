@@ -14,7 +14,7 @@ object Interpreter {
   private def envLookUp(variable: String, env: List[(String, Exp)]): Option[Exp] = {
     env.find( _._1 == variable ) match {
       case Some((s, v)) => Some(v)
-      case _      => None
+      case _ => None
     }
   }
 
@@ -30,15 +30,15 @@ object Interpreter {
     // Arithmetic operations.
     case Add(a, b) => (evalUnderEnv(a, env), evalUnderEnv(b, env)) match {
       case (Const(i), Const(j)) => Const(i + j)
-      case _  => throw new BadMUPLExpression("Addition includes non-Const")
+      case _ => throw new BadMUPLExpression("Addition includes non-Const")
     }
     case Subtract(a, b) => (evalUnderEnv(a, env), evalUnderEnv(b, env)) match {
       case (Const(i), Const(j)) => Const(i - j)
-      case _  => throw new BadMUPLExpression("Subtraction includes non-Const")
+      case _ => throw new BadMUPLExpression("Subtraction includes non-Const")
     }
     case Multiply(a, b) => (evalUnderEnv(a, env), evalUnderEnv(b, env)) match {
       case (Const(i), Const(j)) => Const(i * j)
-      case _  => throw new BadMUPLExpression("Multiplication includes non-Const")
+      case _ => throw new BadMUPLExpression("Multiplication includes non-Const")
     }
     case Divide(a, b) => (evalUnderEnv(a, env), evalUnderEnv(b, env)) match {
       case (Const(i), Const(j)) =>
@@ -47,7 +47,7 @@ object Interpreter {
         } else {
           throw new BadMUPLExpression("Division by zero")
         }
-      case _  => throw new BadMUPLExpression("Multiplication includes non-Const")
+      case _ => throw new BadMUPLExpression("Multiplication includes non-Const")
     }
 
     // Pair & list semantics.
@@ -64,7 +64,7 @@ object Interpreter {
     // Comparisons and control flow.
     case IsMunit(e) => evalUnderEnv(e, env) match {
       case Munit() => Const(1)
-      case _     => Const(0)
+      case _ => Const(0)
     }
     case IsGreater(a, b) => (evalUnderEnv(a, env), evalUnderEnv(b, env)) match {
       case (Const(i), Const(j)) =>
@@ -73,7 +73,7 @@ object Interpreter {
         } else {
           Const(0)
         }
-      case _  => throw new BadMUPLExpression("isgreater applied to non-Const")
+      case _ => throw new BadMUPLExpression("isgreater applied to non-Const")
     }
     case Ifnz(cond, e1, e2) => evalUnderEnv(cond, env) match {
       case Const(i) =>
