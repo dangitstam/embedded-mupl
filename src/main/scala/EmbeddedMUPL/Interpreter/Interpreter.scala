@@ -39,8 +39,8 @@ object Interpreter {
      * will shadow elements later in the list. We will depend on this when
      * implementing lexical scope.
      *
-     * The resulting expression will either be a Const(i) or an Munit()
-     * (the MUPL analog for null/empty). In any other instance, an exception is
+     * The resulting expression will either be a Const(i), a function, or an
+     * Munit() (the MUPL analog for null/empty). In any other instance, an exception is
      * thrown.
      *
      * Custom exceptions are used to help further distinguish between embedded
