@@ -6,6 +6,9 @@ import java.io._
 
 
 object Compiler {
+  // This compile is a work in progress!
+
+  // TODO: Implement compilation of lists.
 
   // Compiled code will be written here.
   private var output = new PrintWriter(new File("mupl.py"))
@@ -43,6 +46,8 @@ object Compiler {
     case (a, Var(x)) => {
       // Binary operations are commutative for arithmetic.
       // If ">" is being used, substitute the operation with "<".
+      //
+      // TODO: This needs to handle division by zero.
       if (op == ">") {
         binop(Var(x), a, "<")
       } else {
@@ -72,13 +77,13 @@ object Compiler {
 
   @throws(classOf[ArithmeticException])
   private def compileToOutput(ast: Exp): Unit = ast match {
-    // We leverage function call semantics of Python to obscure
-    // variables used in self-contained computations.
-    //
-    // Non-trivial operations compile to Python functions that
-    // when called, return the result of the computation.
-    // Convention then is to bind the result to `res` so that
-    // the next computation has access to the result.
+    /* We leverage function call semantics of Python to obscure
+     * variables used in self-contained computations.
+     *
+     * Non-trivial operations compile to Python functions that
+     * when called, return the result of the computation.
+     * Convention then is to bind the result to `res` so that
+     * the next computation has access to the result. */
     case Munit() => newLine("res = null")
     case Var(s) => newLine("res = %s".format(s))
     case Const(i) => newLine("res = %s".format(i))

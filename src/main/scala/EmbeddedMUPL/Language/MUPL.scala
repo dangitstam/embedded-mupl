@@ -16,12 +16,10 @@ sealed trait Exp {
   def times(other: Exp) = Multiply(this, other)
   def divide(other: Exp) = Divide(this, other)
 
-  /**
-   * Control flow.
+  /* Control flow.
    *
    * Custom if-not-zero:
-   * e1 ifnz cond otherwise e2
-   */
+   * e1 ifnz cond otherwise e2 */
   def ifnz(cond: Exp) = new Otherwise(cond, this)
 }
 
@@ -55,7 +53,7 @@ final case class Subtract(a: Exp, b: Exp) extends Exp
 final case class Multiply(a: Exp, b: Exp) extends Exp
 final case class Divide(a: Exp, b: Exp) extends Exp
 
-// For use in ifnz only:
+// For use in ifnz only.
 class Otherwise(cond: Exp, e1: Exp) {
   def otherwise(e2: Exp) = new Ifnz(cond, e1, e2)
 }
@@ -65,35 +63,28 @@ class Otherwise(cond: Exp, e1: Exp) {
  * constant, and function creation.
  */
 object Enhancements {
-
-   /** 
-    * The presence of these implicit definitions allow
-    * using strings and ints in place of Var(string)
-    * and Const(int).
-    *
-    * For instance, "x" plus "y" is implicitly converted to
-    * Var("x") plus Var("y") when plus is called.
-    */
+  /* The presence of these implicit definitions allow
+   * using strings and ints in place of Var(string)
+   * and Const(int).
+   *
+   * For instance, "x" plus "y" is implicitly converted to
+   * Var("x") plus Var("y") when plus is called. */
   implicit def StringToExp(s: String): Var = Var(s)
   implicit def intToExp(i: Int): Const = Const(i)
 
-  /**
-   * Comparisons.
-   */
+  /* Comparisons. */
   def isgreater(e1: Exp, e2: Exp) = IsGreater(e1, e2)
 
-  /**
-   * Method calls using `.` can also be called with a space
-   * (i.e. foo.x and foo x).
+  /* Method calls using `.` can also be called with a space (foo.x = foo x).
    * We can chain function calls and object instantiation to create new syntax
    * embedded within Scala.
    *
    * For instance, below we have custom let syntax:
-   *    let variable "x" equal ("x" plus "y") in ("z" minus 14 divide "z")
-   * And function syntax
-   *    define function null of "x" as (
-   *       "x" times 17
-   *    )
+   *   let variable "x" equal ("x" plus "y") in ("z" minus 14 divide "z")
+   * and custom function syntax:
+   *   define function null of "x" as (
+   *      "x" times 17
+   *   )
    */ 
   def let = new LetConstructor()
   class LetConstructor() {
@@ -114,27 +105,23 @@ object Enhancements {
     def as(body: Exp): Exp = Fun(name, arg, body)
   }
 
-  /**
-   * Custom function call:
-   * apply function "f" on ("x" plus 12)
-   */
+  /* Custom function call:
+   *   apply function "f" on ("x" plus 12)  */
   def apply = new CallConstructor()
   class CallConstructor() { def function(fname: Exp): Use = new Use(fname) }
   class Use(fname: Exp) { def on(arg: Exp) = new Call(fname, arg) }
 
-  /**
-   * Alternative if-not-zero:
-   * ifnz(cond) then e1 else e2 
-   */
+   /* Alternative if-not-zero:
+    *   ifnz(cond) then e1 else e2  */
    def ifnz(cond: Exp) = new IfnzConstructor(cond)
    class IfnzConstructor(cond: Exp) {
      def then(e1: Exp) = new Otherwise(cond, e1)
    }
 
-   /**
-    * List construction and semantics.
-    * apair e1 e2
-    */
+    /* List construction and semantics.
+     *   construct pair(e1 e2)
+     *   first e1
+     *   second e2  */
     def construct = new CollectionsConstructor()
     class CollectionsConstructor() {
       def pair(e1: Exp, e2: Exp) = Apair(e1, e2)
